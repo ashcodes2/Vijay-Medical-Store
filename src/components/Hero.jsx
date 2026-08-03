@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, FileText, Phone } from 'lucide-react';
+import { ShoppingCart, Phone } from 'lucide-react';
 
 const Hero = () => {
   const scrollTo = (id) => {
@@ -55,14 +55,7 @@ const Hero = () => {
               Browse Medicines
             </button>
 
-            <button
-              id="hero-upload-prescription"
-              onClick={() => scrollTo('prescription')}
-              className="flex items-center gap-2 bg-surface-container-highest text-primary px-8 py-4 rounded-xl font-bold text-base hover:bg-surface-container-high border border-outline-variant/20 transition-all duration-300 hover:scale-[1.02] active:scale-95"
-            >
-              <FileText className="w-5 h-5" />
-              Upload Prescription
-            </button>
+
           </div>
 
           {/* Quick phone CTA (mobile only — desktop has it in navbar) */}

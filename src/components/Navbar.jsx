@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShoppingBag, Search, FileText, Menu, X, Phone } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import OfferBanner from './OfferBanner';
 
@@ -34,10 +34,9 @@ const Navbar = ({ cartCount, onCartClick, onSearchChange }) => {
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const navLinks = [
-    { name: 'Home',         href: '#home' },
-    { name: 'Medicines',    href: '#medicines' },
-    { name: 'Prescription', href: '#prescription' },
-    { name: 'Contact',      href: '#footer' },
+    { name: 'Home',      href: '#home' },
+    { name: 'Medicines', href: '#medicines' },
+    { name: 'Contact',   href: '#footer' },
   ];
 
   return (
@@ -135,15 +134,7 @@ const Navbar = ({ cartCount, onCartClick, onSearchChange }) => {
             </AnimatePresence>
           </button>
 
-          {/* Upload prescription CTA — desktop */}
-          <a
-            id="navbar-prescription-cta"
-            href="#prescription"
-            className="hidden lg:flex items-center gap-2 bg-primary-container text-on-primary px-5 py-2.5 rounded-lg text-sm font-bold tracking-wide hover:scale-[1.02] active:scale-95 transition-all border border-tertiary-fixed-dim/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <FileText className="w-4 h-4 text-tertiary-fixed-dim" />
-            Upload Rx
-          </a>
+
 
           {/* Mobile hamburger — 44×44px touch target */}
           <button
@@ -222,15 +213,7 @@ const Navbar = ({ cartCount, onCartClick, onSearchChange }) => {
                 +91 87380 33229
               </a>
 
-              {/* Upload prescription */}
-              <a
-                href="#prescription"
-                onClick={closeMobileMenu}
-                className="flex items-center justify-center gap-2 bg-primary-container text-on-primary text-center py-4 rounded-xl font-bold mt-2 min-h-[52px] hover:opacity-90 transition-opacity"
-              >
-                <FileText className="w-5 h-5 text-tertiary-fixed-dim" />
-                Upload Prescription
-              </a>
+
             </div>
           </motion.div>
         )}

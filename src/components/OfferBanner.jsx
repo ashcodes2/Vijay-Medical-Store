@@ -7,7 +7,6 @@ const OFFERS = [
   "🚚 FREE Delivery on orders above ₹300",
   "💊 100% Genuine medicines from licensed distributors",
   "⏰ Order before 6 PM for same-day delivery in Gorakhpur",
-  "📋 Upload prescription → get medicines in 2 hours",
   "🏅 ISO 9001:2015 Certified Pharmacy — Trusted Since 1984",
 ];
 

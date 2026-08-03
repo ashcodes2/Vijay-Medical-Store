@@ -180,11 +180,7 @@ const Footer = ({ onOpenPolicy }) => {
                 Browse Medicines
               </a>
             </li>
-            <li>
-              <a href="#prescription" className="hover:text-[#fef9ef] transition-colors hover:translate-x-1 inline-block">
-                Upload Prescription
-              </a>
-            </li>
+
             <li>
               <a href="#wellness" className="hover:text-[#fef9ef] transition-colors hover:translate-x-1 inline-block">
                 Wellness Products

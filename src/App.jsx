@@ -6,12 +6,11 @@ import DailyEssentials from './components/DailyEssentials';
 import ProductGrid from './components/ProductGrid';
 import CartDrawer from './components/CartDrawer';
 import CartSection from './components/CartSection';
-import PrescriptionUpload from './components/PrescriptionUpload';
 import Footer from './components/Footer';
 import PolicyModal from './components/PolicyModal';
 import ProductDetailModal from './components/ProductDetailModal';
 import { sendOrderToWhatsApp } from './services/WhatsAppService';
-import { Upload, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const testimonials = [
@@ -81,10 +80,6 @@ function App() {
     sendOrderToWhatsApp(cartItems, subtotal + gst + delivery);
   };
 
-  const handleScrollToPrescription = () => {
-    document.getElementById('prescription')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   const openPolicy = (type) => {
     setPolicyModal({ isOpen: true, type });
   };
@@ -108,7 +103,6 @@ function App() {
           onRemove={handleRemoveItem}
           onConfirm={handleConfirmOrder}
         />
-        <PrescriptionUpload />
         
         {/* Authentic Testimonials */}
         <section className="bg-surface-container-low py-32 px-8 overflow-hidden">
@@ -150,17 +144,7 @@ function App() {
         </section>
       </main>
 
-      {/* Mobile Sticky FAB — Upload Prescription */}
-      <motion.button
-        initial={{ scale: 0, y: 100 }}
-        animate={{ scale: 1, y: 0 }}
-        whileHover={{ scale: 1.1 }}
-        whileActive={{ scale: 0.9 }}
-        onClick={handleScrollToPrescription}
-        className="fixed bottom-8 right-8 z-40 bg-primary-container text-tertiary-fixed-dim p-5 rounded-2xl shadow-2xl md:hidden border border-tertiary-fixed-dim/20"
-      >
-        <Upload className="w-6 h-6" />
-      </motion.button>
+
 
       {/* WhatsApp Chat Bubble — fixed bottom-left */}
       <motion.a
