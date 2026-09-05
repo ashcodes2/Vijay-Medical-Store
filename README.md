@@ -86,10 +86,9 @@ npm run dev
 
 ## 🔐 Admin Portal Access
 
-- **How to Open:** Scroll to the footer on the store page and click **"Admin Portal"** or navigate to `http://localhost:5173/#admin`.
-- **Default Admin Account:**
-  - Email: `admin@vijaymedical.com`
-  - Password: `test123`
+- **Admin Authentication:**
+  - Access is strictly restricted to administrator accounts provisioned directly in the private database.
+  - Credentials must never be committed to source control or shared publicly.
 - **Admin Capabilities:**
   - **Products Tab:** Add new products, edit details (price, stock, category), delete items with confirmation.
   - **Orders Tab:** View incoming customer orders, review cart items and delivery addresses, update order status (`pending` → `confirmed` → `shipped` → `delivered`).

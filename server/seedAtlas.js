@@ -99,20 +99,25 @@ async function seed() {
     console.log(`Seeded ${created} products in MongoDB Atlas.`);
 
     // 3. Ensure Admin
-    const adminEmail = 'admin@vijaymedical.com';
-    const existingAdmin = await Admin.findOne({ email: adminEmail });
-    if (!existingAdmin) {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash('test123', salt);
-      await Admin.create({
-        name: 'Vijay Medical Admin',
-        email: adminEmail,
-        password: hashedPassword,
-        role: 'admin'
-      });
-      console.log('Created Admin account in Atlas.');
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@vijaymedical.com';
+    const adminPass = process.env.ADMIN_INITIAL_PASSWORD;
+    if (!adminPass) {
+      console.log('Skipping Admin creation: ADMIN_INITIAL_PASSWORD not set in environment.');
     } else {
-      console.log('Admin account already exists in Atlas.');
+      const existingAdmin = await Admin.findOne({ email: adminEmail });
+      if (!existingAdmin) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(adminPass, salt);
+        await Admin.create({
+          name: 'Vijay Medical Admin',
+          email: adminEmail,
+          password: hashedPassword,
+          role: 'admin'
+        });
+        console.log('Created Admin account in Atlas.');
+      } else {
+        console.log('Admin account already exists in Atlas.');
+      }
     }
 
     console.log('Atlas Seeding completed successfully!');
