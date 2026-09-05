@@ -7,9 +7,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Production builds
+dist/
+client/dist/
+dist-ssr/
 *.local
 
 # Editor directories and files
@@ -26,6 +32,9 @@ dist-ssr
 # Temporary and build artifacts
 .vercel/
 *.zip
-temp_unzip/
-test_unzip/
-vijay-medical-web/
+
+# Environment secrets
+.env
+.env*.local
+server/.env
+client/.env

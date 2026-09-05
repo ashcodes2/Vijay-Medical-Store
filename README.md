@@ -1,113 +1,132 @@
-# 🏥 Vijay Medical Store — Official Website
+# 🏥 Vijay Medical Store — Full-Stack MERN Application
 
-A modern, fully responsive medical store website built with **React + Vite**, featuring online prescription upload, WhatsApp ordering, product browsing (16 products), and a seamless cart experience.
-
-## 🌐 Live Demo
-
-**[https://vijay-medical.vercel.app](https://vijay-medical.vercel.app)**
-
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel&style=for-the-badge)](https://vijay-medical.vercel.app)
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&style=for-the-badge)](https://react.dev)
-[![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&style=for-the-badge)](https://vitejs.dev)
+A modern full-stack e-commerce web application for **Vijay Medical Store** (serving since 1984), built with **MongoDB, Express.js, React, and Node.js (MERN)**.
 
 ---
 
-## ✨ Features
+## 📁 Repository Structure
 
-- 🛍️ **Product Catalog** — 16 products: medicines, wellness, baby care, personal care & more
-- 🛒 **Cart System** — Click any product card or the `+` button to add to cart; slide-out cart drawer
-- 📋 **Prescription Upload** — Upload prescription image/PDF and send directly to WhatsApp
-  - 📱 **Mobile:** File is shared directly via native share sheet (Web Share API)
-  - 💻 **Desktop:** File auto-downloads + WhatsApp Web opens with step-by-step attach guide
-- 💬 **WhatsApp Ordering** — One-click order confirmation sent to store's WhatsApp
-- 🔍 **Search** — Real-time product search via navbar
-- 📱 **Fully Responsive** — Optimized for mobile, tablet & desktop
-- ⭐ **Testimonials** — Customer reviews carousel
-- 📜 **Policy Modals** — Privacy policy & terms displayed in modal overlays
+```
+new medical/
+├── client/                     # Frontend (React 18 + Vite + Tailwind CSS + Framer Motion)
+│   ├── src/
+│   │   ├── components/         # UI Components (Storefront + Admin Portal)
+│   │   │   ├── AdminLogin.jsx      # Admin login form
+│   │   │   ├── AdminDashboard.jsx  # Admin CRUD for Products & Orders
+│   │   │   ├── CartSection.jsx     # Checkout form + cart summary
+│   │   │   └── ...
+│   │   ├── services/
+│   │   │   ├── api.js              # Centralized backend fetch wrapper
+│   │   │   └── WhatsAppService.js  # WhatsApp notifications
+│   │   ├── App.jsx                 # Main state & view toggle
+│   │   └── main.jsx
+│   ├── .env.example
+│   └── package.json
+│
+└── server/                     # Backend API (Node.js + Express + Mongoose)
+    ├── config/
+    │   └── db.js               # MongoDB connection
+    ├── controllers/
+    │   ├── adminController.js   # JWT Auth signup/login
+    │   ├── categoryController.js# Category CRUD
+    │   ├── orderController.js   # Order creation & status lifecycle
+    │   └── productController.js # Product CRUD
+    ├── middleware/
+    │   ├── auth.js             # JWT Bearer token verification
+    │   ├── errorHandler.js     # Centralized 404 & error middleware
+    │   └── validators.js       # express-validator request rules
+    ├── models/
+    │   ├── Admin.js            # Admin schema with bcrypt hashing
+    │   ├── Category.js         # Category schema
+    │   ├── Order.js            # Order schema with statuses
+    │   └── Product.js          # Product schema
+    ├── routes/
+    │   ├── adminRoutes.js
+    │   ├── categoryRoutes.js
+    │   ├── orderRoutes.js
+    │   └── productRoutes.js
+    ├── .env.example
+    ├── package.json
+    └── server.js               # Express entrypoint
+```
 
 ---
 
-## 🛠️ Tech Stack
+## 🚀 Quick Start (Local Development)
 
-| Technology | Purpose |
-|---|---|
-| React 18 | UI Framework |
-| Vite | Build Tool & Dev Server |
-| Framer Motion | Animations |
-| Lucide React | Icon Library |
-| Tailwind CSS v4 | Styling |
-| WhatsApp API | Order & Prescription Delivery |
-| Vercel | Hosting & Deployment |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+
-- npm
-
-### Installation
+### 1. Start the Backend Server
 
 ```bash
-# Clone the repository
-git clone https://github.com/ashcodes2/New-Medical.git
-cd New-Medical
-
-# Install dependencies
+cd server
 npm install
 
-# Start development server
+# Create your .env file:
+cp .env.example .env
+# Edit .env and ensure MONGO_URI=mongodb://localhost:27017/vijay_medical (or Atlas URI)
+
+# Run development server with auto-reload:
 npm run dev
 ```
+> Server runs on `http://localhost:5000`
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+### 2. Start the Frontend Client
 
-### Build for Production
+In a separate terminal:
 
 ```bash
-npm run build
+cd client
+npm install
+
+# Start Vite dev server:
+npm run dev
 ```
+> Frontend runs on `http://localhost:5173`
 
 ---
 
-## 📁 Project Structure
+## 🔐 Admin Portal Access
 
-```
-src/
-├── components/
-│   ├── Navbar.jsx              # Navigation + search + cart icon
-│   ├── Hero.jsx                # Landing hero section
-│   ├── DailyEssentials.jsx     # Category quick links
-│   ├── ProductGrid.jsx         # 16 products with search filter & cart
-│   ├── CartDrawer.jsx          # Slide-out cart drawer
-│   ├── CartSection.jsx         # Full cart view section
-│   ├── PrescriptionUpload.jsx  # Prescription upload + WhatsApp send
-│   ├── Footer.jsx              # Footer with store info & policy links
-│   └── PolicyModal.jsx         # Privacy & terms modals
-├── services/
-│   └── WhatsAppService.js      # WhatsApp order message builder
-├── App.jsx                     # Root component
-└── main.jsx                    # Entry point
-```
+- **How to Open:** Scroll to the footer on the store page and click **"Admin Portal"** or navigate to `http://localhost:5173/#admin`.
+- **Default Admin Account:**
+  - Email: `admin@vijaymedical.com`
+  - Password: `test123`
+- **Admin Capabilities:**
+  - **Products Tab:** Add new products, edit details (price, stock, category), delete items with confirmation.
+  - **Orders Tab:** View incoming customer orders, review cart items and delivery addresses, update order status (`pending` → `confirmed` → `shipped` → `delivered`).
 
 ---
 
-## 📦 Deployment
+## 📡 REST API Reference
 
-This project is deployed on **Vercel**. Every push to the `main` branch auto-deploys via Vercel's GitHub integration.
+### Public Endpoints
+- `GET /` — API health check
+- `GET /api/products` — List all products
+- `GET /api/products/:id` — Get single product
+- `GET /api/categories` — List categories
+- `POST /api/orders` — Place order (validated payload: customer info + items)
+- `POST /api/admin/login` — Authenticate admin, returns JWT
 
-**Live URL:** [https://vijay-medical.vercel.app](https://vijay-medical.vercel.app)
+### Protected Admin Endpoints (`Authorization: Bearer <token>`)
+- `POST /api/products` — Create product
+- `PUT /api/products/:id` — Update product
+- `DELETE /api/products/:id` — Delete product
+- `POST /api/categories` — Create category
+- `PUT /api/categories/:id` — Update category
+- `DELETE /api/categories/:id` — Delete category
+- `GET /api/orders` — View all orders
+- `PUT /api/orders/:id/status` — Update order status
 
 ---
 
-## 🏪 Store Info
-
-**Vijay Medical Store**  
-📍 134, Sahjanwa Market, Gorakhpur, Uttar Pradesh — 273209  
-📞 Phone: [8738033229](tel:+918738033229)  
-💬 WhatsApp: [+91 87380 33229](https://wa.me/918738033229)
+## 🛡️ Error Handling & Validation
+- **Request Validation:** Handled via `express-validator` across product, order, and auth routes. Returns structured `{ success: false, message, errors: [...] }`.
+- **Centralized Error Handler:** Intercepts Mongoose `CastError` (invalid ObjectId), `ValidationError`, duplicate keys (`11000`), and JWT errors.
+- **404 Fallback:** Returns clean JSON error for undefined endpoints.
 
 ---
 
-*Built with ❤️ for Vijay Medical Store — Serving since 1984*
+## 🌐 Deployment Guide
+
+1. **Database:** Create a free cluster on [MongoDB Atlas](https://www.mongodb.com/atlas/database) and copy your connection string into `server/.env`.
+2. **Backend:** Deploy `server/` to [Render](https://render.com) or [Railway](https://railway.app) as a Web Service. Set environment variables `MONGO_URI`, `JWT_SECRET`, `PORT`.
+3. **Frontend:** Deploy `client/` to [Vercel](https://vercel.com). Add environment variable `VITE_API_URL` pointing to your deployed backend URL.
