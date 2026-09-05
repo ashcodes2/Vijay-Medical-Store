@@ -35,10 +35,7 @@ async function updatePassword() {
       process.exit(1);
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-    admin.password = hashedPassword;
+    admin.password = newPassword;
     if (newEmail) {
       admin.email = newEmail.toLowerCase().trim();
     }
