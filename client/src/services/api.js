@@ -1,7 +1,6 @@
-// Base URL for all backend API calls.
-// In development: Vite reads VITE_API_URL from client/.env (if it exists).
-// Falls back to localhost:5000 so it works out of the box without any .env.
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const rawApi = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const cleanApi = rawApi.replace(/\/+$/, '');
+const API_URL = cleanApi.endsWith('/api') ? cleanApi : `${cleanApi}/api`;
 
 // --- Helper to make API requests ---
 // Wraps fetch() so we don't repeat headers/error-handling in every component.
