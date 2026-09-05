@@ -1,4 +1,12 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
+
+// Configure resilient DNS resolution for MongoDB Atlas SRV connection strings
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (e) {
+  // Fallback to system default if restricted
+}
 
 // Connects to MongoDB using the URI from .env
 // We keep this in a separate file so server.js stays clean,
