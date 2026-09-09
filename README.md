@@ -18,7 +18,7 @@
 ## 📁 Repository Structure
 
 ```
-new medical/
+vijay-medical-store/
 ├── client/                     # Frontend (React 18 + Vite + Tailwind CSS + Framer Motion)
 │   ├── src/
 │   │   ├── components/         # UI Components (Storefront + Admin Portal)
