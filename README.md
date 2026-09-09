@@ -1,6 +1,17 @@
-# 🏥 Vijay Medical Store — Full-Stack MERN Application
+<div align="center">
+  <h1>🏥 Vijay Medical Store</h1>
+  <p><strong>Commercial Full-Stack MERN E-Commerce & Inventory Management Platform</strong></p>
 
-A modern full-stack e-commerce web application for **Vijay Medical Store** (serving since 1984), built with **MongoDB, Express.js, React, and Node.js (MERN)**.
+  <p>
+    <a href="https://vijay-medical.vercel.app"><img src="https://img.shields.io/badge/Live%20Store-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" /></a>
+    <img src="https://img.shields.io/badge/Node.js-v18+-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node" />
+    <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
+    <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
+    <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind" />
+  </p>
+</div>
+
+---
 
 ---
 
