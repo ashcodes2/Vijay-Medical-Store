@@ -172,7 +172,11 @@ const CartSection = ({ cartItems, onUpdateQuantity, onRemove, onConfirm }) => {
                     <div className="min-w-0 flex-1">
                       <h3 className="font-bold text-primary text-base sm:text-lg truncate">{item.name}</h3>
                       <p className="text-sm font-bold text-[#d1a154]">₹{item.price}</p>
-                      <span className="text-[10px] text-green-700 bg-green-50 px-2 py-0.5 rounded font-semibold">In Stock</span>
+                      {typeof item.stock === 'number' && item.quantity >= item.stock ? (
+                        <span className="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded font-semibold">Max in Cart ({item.stock})</span>
+                      ) : (
+                        <span className="text-[10px] text-green-700 bg-green-50 px-2 py-0.5 rounded font-semibold">In Stock</span>
+                      )}
                     </div>
                   </div>
 
@@ -188,8 +192,14 @@ const CartSection = ({ cartItems, onUpdateQuantity, onRemove, onConfirm }) => {
                       <span className="px-3 sm:px-4 font-bold text-sm text-primary">{item.quantity}</span>
                       <button
                         onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                        disabled={typeof item.stock === 'number' && item.quantity >= item.stock}
                         aria-label="Increase quantity"
-                        className="p-2 sm:p-2.5 hover:bg-surface-container transition-colors"
+                        title={typeof item.stock === 'number' && item.quantity >= item.stock ? "Maximum stock reached" : "Increase quantity"}
+                        className={`p-2 sm:p-2.5 transition-colors ${
+                          typeof item.stock === 'number' && item.quantity >= item.stock
+                            ? 'opacity-40 cursor-not-allowed'
+                            : 'hover:bg-surface-container'
+                        }`}
                       >
                         <Plus className="w-3.5 h-3.5 text-primary" />
                       </button>

@@ -65,7 +65,13 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateQuantity, onRemove, on
                           <span className="px-3 text-sm font-bold">{item.quantity}</span>
                           <button 
                             onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                            className="px-2 py-1 hover:bg-surface-container transition-colors"
+                            disabled={typeof item.stock === 'number' && item.quantity >= item.stock}
+                            title={typeof item.stock === 'number' && item.quantity >= item.stock ? "Maximum stock reached" : "Increase quantity"}
+                            className={`px-2 py-1 transition-colors ${
+                              typeof item.stock === 'number' && item.quantity >= item.stock
+                                ? 'opacity-40 cursor-not-allowed'
+                                : 'hover:bg-surface-container'
+                            }`}
                           >
                             <Plus className="w-4 h-4" />
                           </button>

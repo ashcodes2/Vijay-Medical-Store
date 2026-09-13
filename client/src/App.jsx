@@ -112,14 +112,39 @@ function App() {
   };
 
   const handleAddToCart = (product) => {
+    const prodId = product.id || product._id;
+    const availableStock = typeof product.stock === 'number' ? product.stock : 0;
+
+    if (availableStock <= 0) {
+      setToast(`"${product.name}" is currently out of stock.`);
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+
+    const existing = cartItems.find(item => (item.id || item._id) === prodId);
+    if (existing && existing.quantity >= availableStock) {
+      setToast(`Only ${availableStock} unit(s) of "${product.name}" available in stock.`);
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+
+    const prodImage = product.image || (Array.isArray(product.images) && product.images[0]) || '';
+    const normalizedProduct = {
+      ...product,
+      id: prodId,
+      image: prodImage,
+      stock: availableStock,
+    };
+
     setCartItems(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
+      const match = prev.find(item => (item.id || item._id) === prodId);
+      if (match) {
+        if (match.quantity >= availableStock) return prev;
         return prev.map(item => 
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          (item.id || item._id) === prodId ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [...prev, { ...normalizedProduct, quantity: 1 }];
     });
 
     // Show interactive toast
@@ -132,13 +157,21 @@ function App() {
       handleRemoveItem(id);
       return;
     }
+
+    const item = cartItems.find(i => i.id === id || i._id === id);
+    if (item && typeof item.stock === 'number' && newQuantity > item.stock) {
+      setToast(`Only ${item.stock} unit(s) of "${item.name}" available in stock.`);
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+
     setCartItems(prev => prev.map(item => 
-      item.id === id ? { ...item, quantity: newQuantity } : item
+      (item.id === id || item._id === id) ? { ...item, quantity: newQuantity } : item
     ));
   };
 
   const handleRemoveItem = (id) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
+    setCartItems(prev => prev.filter(item => item.id !== id && item._id !== id));
   };
 
   // New checkout flow: save to DB first, then WhatsApp as a bonus notification
@@ -149,11 +182,16 @@ function App() {
         customerName: customerInfo.name,
         phone: customerInfo.phone,
         address: customerInfo.address,
-        items: cartItems.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-        })),
+        items: cartItems.map(item => {
+          const rawId = item._id || item.id;
+          const isValidObjectId = typeof rawId === 'string' && /^[0-9a-fA-F]{24}$/.test(rawId);
+          return {
+            ...(isValidObjectId ? { product: rawId } : {}),
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+          };
+        }),
         totalAmount,
       };
 
