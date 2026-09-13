@@ -19,6 +19,7 @@ app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/inventory', require('./routes/inventoryRoutes'));
 
 // Simple health-check route to verify server is alive
 app.get('/', (req, res) => {

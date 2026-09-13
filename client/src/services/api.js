@@ -76,3 +76,9 @@ export const createCategory = (data, token) => {
 export const deleteCategory = (id, token) => {
   return apiRequest(`/categories/${id}`, { method: 'DELETE', token });
 };
+
+// Inventory demand alerts (admin)
+export const getInventoryAlerts = (token) => {
+  return apiRequest('/inventory/alerts', { method: 'GET', token });
+};
+
