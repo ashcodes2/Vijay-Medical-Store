@@ -80,7 +80,7 @@ const getInventoryAlerts = async (req, res, next) => {
 
       // Calculate effective active days to avoid underestimating new products
       const productCreatedAt = product.createdAt ? new Date(product.createdAt).getTime() : now;
-      const daysActive = Math.max(1, Math.min(30, Math.ceil((now - productCreatedAt) / (1000 * 60 * 60 * 24))));
+      const daysActive = Math.max(1, Math.min(30, Math.round((now - productCreatedAt) / (1000 * 60 * 60 * 24))));
 
       // Average daily sales demand
       const avgDailyDemand = Number((unitsSold30d / daysActive).toFixed(2));
