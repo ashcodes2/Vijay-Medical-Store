@@ -16,7 +16,7 @@ const policyContent = {
   shipping: {
     title: "Shipping Info",
     icon: <Truck className="w-8 h-8" />,
-    content: "We provide priority pharmaceutical delivery within 2-4 business hours across Central City. A flat delivery fee of ₹20 applies to all orders. Orders above ₹500 qualify for complimentary free delivery. Real-time tracking is available via WhatsApp once your order is dispatched."
+    content: "We provide priority pharmaceutical delivery within 2-4 business hours across Central City. A flat delivery fee of ₹20 applies to all orders. Orders above ₹500 qualify for complimentary free delivery. Real-time tracking is available directly on our website using your secure order tracking link."
   },
   returns: {
     title: "Returns & Refunds",

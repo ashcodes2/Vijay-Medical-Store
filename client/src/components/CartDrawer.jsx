@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Plus, Minus, Send } from 'lucide-react';
 
-const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateQuantity, onRemove, onConfirm }) => {
+const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateQuantity, onRemove, onCheckout }) => {
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const gst = subtotal * 0.12;
   const delivery = subtotal > 0 ? 20 : 0;
@@ -113,14 +113,17 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateQuantity, onRemove, on
                   <span>₹{total.toFixed(2)}</span>
                 </div>
                 <button 
+                  id="drawer-proceed-checkout-btn"
                   onClick={() => {
-                    // Close drawer and scroll to the full cart section where the checkout form is
                     onClose();
-                    document.getElementById('cart-summary')?.scrollIntoView({ behavior: 'smooth' });
+                    if (typeof onCheckout === 'function') {
+                      onCheckout();
+                    } else {
+                      window.location.hash = 'checkout';
+                    }
                   }}
-                  className="w-full bg-[#d1a154] text-primary py-4 rounded-xl font-black uppercase tracking-widest hover:bg-[#f1be6e] transition-all flex items-center justify-center gap-3 shadow-lg"
+                  className="w-full bg-[#d1a154] text-primary py-4 rounded-xl font-black uppercase tracking-widest hover:bg-[#f1be6e] transition-all flex items-center justify-center gap-3 shadow-lg cursor-pointer"
                 >
-                  <Send className="w-5 h-5" />
                   Proceed to Checkout
                 </button>
               </div>

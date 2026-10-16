@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShoppingBag, Search, Menu, X, Phone } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Phone, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import OfferBanner from './OfferBanner';
 
-const Navbar = ({ cartCount, onCartClick, onSearchChange }) => {
+const Navbar = ({ cartCount, onCartClick, onSearchChange, onUploadPrescription }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -34,11 +34,11 @@ const Navbar = ({ cartCount, onCartClick, onSearchChange }) => {
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const navLinks = [
-    { name: 'Home',      href: '#home' },
-    { name: 'Medicines', href: '#medicines' },
-    { name: 'Wellness',  href: '#wellness' },
-    { name: 'Cart',      href: '#cart-summary' },
-    { name: 'Contact',   href: '#footer' },
+    { name: 'Home',        href: '#home' },
+    { name: 'Medicines',   href: '#medicines' },
+    { name: 'Wellness',    href: '#wellness' },
+    { name: 'Track Order', href: '#track' },
+    { name: 'Contact',     href: '#footer' },
   ];
 
   return (
@@ -112,6 +112,17 @@ const Navbar = ({ cartCount, onCartClick, onSearchChange }) => {
             </div>
             <span className="tracking-tight">+91 87380 33229</span>
           </a>
+
+          {/* Upload Rx Prescription Button */}
+          <button
+            id="nav-upload-rx-button"
+            onClick={onUploadPrescription}
+            aria-label="Upload Prescription"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full bg-primary-container/15 hover:bg-primary-container/30 text-primary text-xs font-bold transition-all border border-primary/10 hover:border-primary/25 cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-tertiary-fixed-dim" />
+            <span className="hidden sm:inline">Upload Rx</span>
+          </button>
 
           {/* Cart */}
           <button
@@ -199,6 +210,18 @@ const Navbar = ({ cartCount, onCartClick, onSearchChange }) => {
                   {link.name}
                 </a>
               ))}
+
+              {/* Upload Prescription in Mobile Menu */}
+              <button
+                onClick={() => {
+                  closeMobileMenu();
+                  onUploadPrescription?.();
+                }}
+                className="text-xl font-bold text-primary py-3 px-4 rounded-xl hover:bg-surface-container transition-colors min-h-[52px] flex items-center gap-2.5 text-left"
+              >
+                <Sparkles className="w-5 h-5 text-tertiary-fixed-dim" />
+                Upload Prescription
+              </button>
 
               {/* Divider */}
               <div className="h-px bg-outline-variant/10 my-2" />

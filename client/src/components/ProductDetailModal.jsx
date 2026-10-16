@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, ShieldCheck, Truck, Clock, AlertCircle } from 'lucide-react';
 
 const FALLBACK_SVG = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><rect width='200' height='200' fill='%23f8f3e9'/><rect x='72' y='88' width='56' height='24' rx='12' fill='%2300332e' opacity='0.15' transform='rotate(-45 100 100)'/><rect x='72' y='88' width='56' height='24' rx='12' fill='none' stroke='%2300332e' stroke-width='3' opacity='0.3' transform='rotate(-45 100 100)'/><circle cx='100' cy='100' r='38' fill='none' stroke='%2300332e' stroke-width='2' opacity='0.1'/><text x='100' y='155' text-anchor='middle' font-family='sans-serif' font-size='11' fill='%23001c19' opacity='0.4'>Image unavailable</text></svg>`;
 
 const ProductDetailModal = ({ product, onClose, onAddToCart }) => {
+  const [prevProductId, setPrevProductId] = useState(product?._id);
   const [imgError, setImgError] = useState(false);
   const [added, setAdded] = useState(false);
 
-  useEffect(() => {
+  if (product?._id !== prevProductId) {
+    setPrevProductId(product?._id);
     setImgError(false);
     setAdded(false);
-  }, [product]);
+  }
 
   if (!product) return null;
 

@@ -37,6 +37,10 @@ export const createOrder = (orderData) => {
   return apiRequest('/orders', { method: 'POST', body: orderData });
 };
 
+export const trackOrderByToken = (token) => {
+  return apiRequest(`/orders/track/${encodeURIComponent(token)}`);
+};
+
 // Admin auth
 export const adminLogin = (credentials) => {
   return apiRequest('/admin/login', { method: 'POST', body: credentials });
@@ -82,3 +86,20 @@ export const getInventoryAlerts = (token) => {
   return apiRequest('/inventory/alerts', { method: 'GET', token });
 };
 
+// Prescription OCR scan
+export const scanPrescription = async (file) => {
+  const formData = new FormData();
+  formData.append('prescription', file);
+
+  const res = await fetch(`${API_URL}/prescription/scan`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Prescription scan failed');
+  }
+
+  return data;
+};

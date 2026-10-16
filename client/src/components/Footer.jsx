@@ -195,6 +195,11 @@ const Footer = ({ onOpenPolicy, onOpenAdmin }) => {
                 My Cart
               </a>
             </li>
+            <li>
+              <a href="#track" className="hover:text-[#fef9ef] transition-colors hover:translate-x-1 inline-block text-[#f1be6e]">
+                Track Order
+              </a>
+            </li>
             <li className="pt-2 border-t border-white/5">
               <button onClick={() => onOpenPolicy('privacy')} className="hover:text-[#fef9ef] transition-colors text-left">
                 Privacy Policy

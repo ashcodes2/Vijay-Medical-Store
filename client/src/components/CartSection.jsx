@@ -34,14 +34,14 @@ const CartSection = ({ cartItems, onUpdateQuantity, onRemove, onConfirm }) => {
       return;
     }
 
-    const phoneRegex = /^[0-9+ -]{10,15}$/;
-    if (!phoneRegex.test(trimmedPhone) || trimmedPhone.replace(/\D/g, '').length < 10) {
-      setErrorMsg('Please provide a valid 10-digit phone number for delivery updates.');
+    const cleanPhone = trimmedPhone.replace(/[\s-]/g, '').replace(/^\+?91/, '').slice(0, 10);
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      setErrorMsg('Please provide a valid 10-digit Indian mobile number (e.g. 9876543210).');
       return;
     }
 
     if (trimmedAddress.length < 5) {
-      setErrorMsg('Please provide a complete street and delivery address.');
+      setErrorMsg('Please provide a complete street and delivery address (at least 5 characters).');
       return;
     }
 
@@ -50,7 +50,7 @@ const CartSection = ({ cartItems, onUpdateQuantity, onRemove, onConfirm }) => {
 
     // Pass customer info + totals up to App.jsx which handles the API call
     onConfirm(
-      { name: trimmedName, phone: trimmedPhone, address: trimmedAddress },
+      { name: trimmedName, phone: cleanPhone, address: trimmedAddress },
       total,
       () => {
         // Success callback
@@ -65,7 +65,7 @@ const CartSection = ({ cartItems, onUpdateQuantity, onRemove, onConfirm }) => {
     );
   };
 
-  // ── Success State Screen ──
+  // ── Success State: reset form only (modal shown globally by App.jsx)
   if (orderStatus === 'success') {
     return (
       <section id="cart-summary" className="py-24 px-6 sm:px-8 bg-surface-container-low border-t border-outline-variant/10">
@@ -75,11 +75,11 @@ const CartSection = ({ cartItems, onUpdateQuantity, onRemove, onConfirm }) => {
           </div>
           <div className="space-y-2">
             <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-bold uppercase tracking-wider rounded-full">
-              Order Confirmed & Saved
+              Order Confirmed
             </span>
-            <h2 className="text-3xl font-headline font-bold text-primary">Thank You for Your Order!</h2>
+            <h2 className="text-3xl font-headline font-bold text-primary">Order Placed!</h2>
             <p className="text-on-surface-variant text-sm sm:text-base leading-relaxed">
-              Your order has been recorded in our system. Our pharmacist will review it and confirm delivery via WhatsApp & phone call.
+              Your order is saved. You will receive an SMS confirmation shortly. Our team will deliver within 2–4 hours.
             </p>
           </div>
           <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">

@@ -33,6 +33,11 @@ const productSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
+  isActive: {
+    type: Boolean,
+    default: true,
+    index: true,
+  },
 }, {
   // Mongoose auto-adds createdAt and updatedAt fields
   timestamps: true,

@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Phone } from 'lucide-react';
+import { ShoppingCart, Phone, FileText } from 'lucide-react';
 
-const Hero = () => {
+const Hero = ({ onUploadPrescription }) => {
   const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -49,13 +49,20 @@ const Hero = () => {
             <button
               id="hero-browse-medicines"
               onClick={() => scrollTo('medicines')}
-              className="flex items-center gap-2 bg-primary-container text-on-primary px-8 py-4 rounded-xl font-bold text-base hover:shadow-2xl hover:shadow-primary/20 hover:scale-[1.03] active:scale-95 transition-all duration-300"
+              className="flex items-center gap-2 bg-primary-container text-on-primary px-8 py-4 rounded-xl font-bold text-base hover:shadow-2xl hover:shadow-primary/20 hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer"
             >
               <ShoppingCart className="w-5 h-5 text-tertiary-fixed-dim" />
               Browse Medicines
             </button>
 
-
+            <button
+              id="hero-upload-prescription"
+              onClick={onUploadPrescription}
+              className="flex items-center gap-2 bg-surface text-primary border-2 border-primary/20 hover:border-primary px-7 py-4 rounded-xl font-bold text-base hover:bg-surface-container hover:scale-[1.03] active:scale-95 transition-all duration-300 shadow-sm cursor-pointer"
+            >
+              <FileText className="w-5 h-5 text-tertiary-fixed-dim" />
+              Upload Prescription
+            </button>
           </div>
 
           {/* Quick phone CTA (mobile only — desktop has it in navbar) */}

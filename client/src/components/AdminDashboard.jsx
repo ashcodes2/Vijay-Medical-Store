@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowLeft, LogOut, Package, ClipboardList, Plus, Pencil, Trash2, Loader2, X,
   AlertTriangle, RefreshCw, Search, CheckCircle2, Clock, Info
@@ -42,7 +42,7 @@ const AdminDashboard = ({ adminName, onLogout, onBack }) => {
         </div>
 
         {activeTab === 'products' && <ProductsTab token={token} />}
-        {activeTab === 'orders' && <OrdersTab token={token} />}
+        {activeTab === 'orders' && <OrdersTab token={token} onLogout={onLogout} />}
         {activeTab === 'alerts' && <InventoryAlertsTab token={token} />}
       </div>
     </div>
@@ -70,7 +70,7 @@ const ProductsTab = ({ token }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getProducts();
@@ -80,11 +80,27 @@ const ProductsTab = ({ token }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => {
+    let ignore = false;
+    getProducts()
+      .then((data) => {
+        if (!ignore) setProducts(data);
+      })
+      .catch((err) => {
+        if (!ignore) console.error('Failed to fetch products:', err);
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const handleDelete = async (id) => {
     try {
@@ -274,34 +290,98 @@ const ProductForm = ({ token, product, onClose, onDone }) => {
   );
 };
 
+// Allowed status transitions for admin dropdown
+const ALLOWED_ADMIN_TRANSITIONS = {
+  pending: [
+    { value: 'pending', label: 'Pending' },
+    { value: 'confirmed', label: 'Confirmed & Packed' },
+    { value: 'cancelled', label: 'Cancel Order' },
+  ],
+  confirmed: [
+    { value: 'confirmed', label: 'Confirmed & Packed' },
+    { value: 'shipped', label: 'Out for Delivery' },
+    { value: 'cancelled', label: 'Cancel Order' },
+  ],
+  shipped: [
+    { value: 'shipped', label: 'Out for Delivery' },
+    { value: 'delivered', label: 'Delivered' },
+    { value: 'cancelled', label: 'Cancel Order' },
+  ],
+  delivered: [
+    { value: 'delivered', label: 'Delivered (Terminal)' },
+  ],
+  cancelled: [
+    { value: 'cancelled', label: 'Cancelled (Terminal)' },
+  ],
+};
+
 // ─── Orders Tab ───
-const OrdersTab = ({ token }) => {
+const OrdersTab = ({ token, onLogout }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState(null);
+  const [feedback, setFeedback] = useState(null);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getOrders(token);
-      setOrders(data);
+      setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch orders:', err);
+      if (err.message?.includes('Token') || err.message?.includes('access denied') || err.message?.includes('401')) {
+        alert('Your admin session has expired. Please sign in again.');
+        onLogout?.();
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, onLogout]);
 
-  useEffect(() => { fetchOrders(); }, []);
+  useEffect(() => {
+    let ignore = false;
+    getOrders(token)
+      .then((data) => {
+        if (!ignore) setOrders(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        if (!ignore) {
+          console.error('Failed to fetch orders:', err);
+          if (err.message?.includes('Token') || err.message?.includes('access denied') || err.message?.includes('401')) {
+            alert('Your admin session has expired. Please sign in again.');
+            onLogout?.();
+          }
+        }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [token, onLogout]);
 
   const handleStatusChange = async (orderId, newStatus) => {
+    setUpdatingId(orderId);
+    setFeedback(null);
     try {
-      await updateOrderStatus(orderId, newStatus, token);
-      // Update local state so we don't need a full refetch
+      const updated = await updateOrderStatus(orderId, newStatus, token);
       setOrders(prev => prev.map(o =>
-        o._id === orderId ? { ...o, status: newStatus } : o
+        o._id === orderId ? (updated && updated._id ? updated : { ...o, status: newStatus }) : o
       ));
+      setFeedback({ type: 'success', message: `Order status changed to "${newStatus}" successfully!` });
+      setTimeout(() => setFeedback(null), 4000);
     } catch (err) {
-      alert('Failed to update: ' + err.message);
+      if (err.message?.includes('Token') || err.message?.includes('access denied') || err.message?.includes('401')) {
+        alert('Your admin session has expired. Please sign in again.');
+        onLogout?.();
+      } else {
+        setFeedback({ type: 'error', message: err.message || 'Validation error while updating status' });
+        setTimeout(() => setFeedback(null), 5000);
+      }
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -309,51 +389,108 @@ const OrdersTab = ({ token }) => {
 
   return (
     <div className="space-y-6 pb-12">
-      <p className="text-on-surface-variant font-medium">{orders.length} total orders</p>
+      {feedback && (
+        <div className={`p-4 rounded-xl text-sm font-bold flex items-center justify-between shadow-sm transition-all ${
+          feedback.type === 'success' ? 'bg-green-100 text-green-900 border border-green-300' : 'bg-red-100 text-red-900 border border-red-300'
+        }`}>
+          <span>{feedback.message}</span>
+          <button onClick={() => setFeedback(null)} className="text-xs underline ml-4 cursor-pointer">Dismiss</button>
+        </div>
+      )}
+
+      <div className="flex justify-between items-center">
+        <p className="text-on-surface-variant font-medium">{orders.length} total orders</p>
+        <button
+          onClick={fetchOrders}
+          className="text-xs font-bold px-3 py-1.5 rounded-lg border border-outline-variant/20 hover:bg-surface-container transition-colors flex items-center gap-1.5"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+          Refresh Orders
+        </button>
+      </div>
 
       {orders.length === 0 ? (
         <p className="text-center text-on-surface-variant py-16">No orders yet.</p>
       ) : (
         <div className="space-y-4">
-          {orders.map(order => (
-            <div key={order._id} className="bg-white rounded-2xl border border-outline-variant/10 p-6 shadow-sm space-y-4">
-              {/* Order Header */}
-              <div className="flex flex-col sm:flex-row justify-between gap-3">
-                <div>
-                  <h4 className="font-bold text-primary text-lg">{order.customerName}</h4>
-                  <p className="text-sm text-on-surface-variant">{order.phone} • {order.address}</p>
-                  <p className="text-xs text-on-surface-variant/60 mt-1">{new Date(order.createdAt).toLocaleString()}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <StatusBadge status={order.status} />
-                  <select
-                    value={order.status}
-                    onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                    className="text-xs font-bold bg-surface-container-low border border-outline-variant/20 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary-fixed-dim cursor-pointer"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                  </select>
-                </div>
-              </div>
+          {orders.map(order => {
+            const currentStatus = order.status || 'pending';
+            const availableOptions = ALLOWED_ADMIN_TRANSITIONS[currentStatus] || [
+              { value: currentStatus, label: currentStatus }
+            ];
+            const isTerminal = currentStatus === 'delivered' || currentStatus === 'cancelled';
+            const orderRef = order.orderReference || `#VMS-${(order.shortId || String(order._id).slice(-6)).toUpperCase()}`;
 
-              {/* Order Items */}
-              <div className="border-t border-outline-variant/10 pt-3 space-y-2">
-                {order.items.map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm">
-                    <span className="text-on-surface-variant">{item.name} × {item.quantity}</span>
-                    <span className="font-bold text-primary">₹{item.price * item.quantity}</span>
+            return (
+              <div key={order._id} className="bg-white rounded-2xl border border-outline-variant/10 p-6 shadow-sm space-y-4">
+                {/* Order Header */}
+                <div className="flex flex-col sm:flex-row justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold bg-primary-container text-tertiary-fixed-dim px-2 py-0.5 rounded-md">
+                        {orderRef}
+                      </span>
+                      <h4 className="font-bold text-primary text-lg">{order.customerName}</h4>
+                    </div>
+                    <p className="text-sm text-on-surface-variant mt-0.5">{order.phone} • {order.address}</p>
+                    <p className="text-xs text-on-surface-variant/60 mt-1">{new Date(order.createdAt).toLocaleString()}</p>
                   </div>
-                ))}
-                <div className="flex justify-between text-base font-black text-primary pt-2 border-t border-outline-variant/10">
-                  <span>Total</span>
-                  <span>₹{order.totalAmount?.toFixed(2)}</span>
+                  <div className="flex items-center gap-3">
+                    <StatusBadge status={order.status} />
+                    <select
+                      value={order.status}
+                      disabled={isTerminal || updatingId === order._id}
+                      onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                      className={`text-xs font-bold bg-surface-container-low border border-outline-variant/20 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary-fixed-dim cursor-pointer ${
+                        isTerminal ? 'opacity-60 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      {availableOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+
+                {/* Order Items */}
+                <div className="border-t border-outline-variant/10 pt-3 space-y-2">
+                  {order.items.map((item, i) => (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span className="text-on-surface-variant">{item.name} × {item.quantity}</span>
+                      <span className="font-bold text-primary">₹{(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-base font-black text-primary pt-2 border-t border-outline-variant/10">
+                    <span>Total</span>
+                    <span>₹{order.totalAmount?.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Status Transition Audit Timeline */}
+                {order.statusHistory && order.statusHistory.length > 0 && (
+                  <div className="border-t border-outline-variant/10 pt-3 space-y-1.5 bg-surface-container-low/40 p-3 rounded-xl">
+                    <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
+                      Audit Trail ({order.statusHistory.length} event{order.statusHistory.length > 1 ? 's' : ''})
+                    </p>
+                    <div className="space-y-1 text-xs">
+                      {order.statusHistory.map((h, idx) => (
+                        <div key={idx} className="flex items-baseline justify-between text-[11px] text-on-surface-variant">
+                          <span>
+                            <strong className="capitalize text-primary">{h.status}</strong>: {h.note || 'Status updated'} {h.actor ? `[${h.actor}]` : ''}
+                          </span>
+                          <span className="text-[10px] text-on-surface-variant/60 ml-2 whitespace-nowrap">
+                            {new Date(h.changedAt || h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -399,7 +536,7 @@ const InventoryAlertsTab = ({ token }) => {
   const [filterLevel, setFilterLevel] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -411,11 +548,28 @@ const InventoryAlertsTab = ({ token }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
-    fetchAlerts();
-  }, []);
+    let ignore = false;
+    getInventoryAlerts(token)
+      .then((res) => {
+        if (!ignore) setData(res);
+      })
+      .catch((err) => {
+        if (!ignore) {
+          console.error('Failed to load inventory alerts:', err);
+          setError(err.message || 'Unable to load inventory analytics');
+        }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [token]);
 
   if (loading) return <LoadingSpinner />;
 
@@ -437,7 +591,7 @@ const InventoryAlertsTab = ({ token }) => {
     );
   }
 
-  const { summary = {}, alerts = [], constants = {} } = data || {};
+  const { summary = {}, alerts = [] } = data || {};
 
   const filteredAlerts = alerts.filter(item => {
     const matchesLevel = filterLevel === 'ALL' || item.alertLevel === filterLevel;
@@ -658,6 +812,7 @@ const STATUS_COLORS = {
   confirmed: 'bg-blue-100 text-blue-800',
   shipped: 'bg-purple-100 text-purple-800',
   delivered: 'bg-green-100 text-green-800',
+  cancelled: 'bg-red-100 text-red-800',
 };
 
 const StatusBadge = ({ status }) => (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ShoppingCart, SearchX, ChevronDown, AlertCircle, RefreshCw } from 'lucide-react';
 import { getProducts } from '../services/api';
@@ -12,11 +12,13 @@ const FALLBACK_SVG = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000
    ProductImage — handles loading skeleton + onError fallback
 ───────────────────────────────────────────────────────── */
 const ProductImage = ({ src, alt }) => {
+  const [prevSrc, setPrevSrc] = useState(src);
   const [status, setStatus] = useState('loading'); // loading | loaded | error
 
-  useEffect(() => {
+  if (src !== prevSrc) {
+    setPrevSrc(src);
     setStatus('loading');
-  }, [src]);
+  }
 
   return (
     <div className="relative w-full h-full">
@@ -78,7 +80,7 @@ const ProductGrid = ({ onAddToCart, searchQuery, onProductClick }) => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortOrder, setSortOrder] = useState('default');
 
-  const fetchProductList = async () => {
+  const fetchProductList = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -94,10 +96,35 @@ const ProductGrid = ({ onAddToCart, searchQuery, onProductClick }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchProductList();
+    let ignore = false;
+    getProducts()
+      .then((data) => {
+        if (!ignore) {
+          if (Array.isArray(data)) {
+            setProducts(data.map(normalizeProduct));
+          } else {
+            setProducts([]);
+          }
+        }
+      })
+      .catch((err) => {
+        if (!ignore) {
+          console.error('Failed to fetch products from backend:', err);
+          setError(err.message || 'Unable to connect to database. Please try again.');
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   // Compute category list dynamically based on database products + default categories

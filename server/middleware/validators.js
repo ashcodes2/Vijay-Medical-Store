@@ -49,38 +49,60 @@ const validateProduct = validate([
     .withMessage('Stock must be an integer 0 or greater'),
 ]);
 
-const validateOrder = validate([
-  body('customerName')
-    .trim()
-    .notEmpty()
-    .withMessage('Customer name is required')
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Customer name must be between 2 and 100 characters'),
-  body('phone')
-    .trim()
-    .notEmpty()
-    .withMessage('Phone number is required')
-    .matches(/^[0-9+ -]{10,15}$/)
-    .withMessage('Please provide a valid 10-digit phone number'),
-  body('address')
-    .trim()
-    .notEmpty()
-    .withMessage('Delivery address is required')
-    .isLength({ min: 5 })
-    .withMessage('Address must be at least 5 characters'),
-  body('items')
-    .isArray({ min: 1 })
-    .withMessage('Order must contain at least one item'),
-  body('totalAmount')
-    .isFloat({ min: 0 })
-    .withMessage('Total amount must be a positive number'),
-]);
+const validateOrder = [
+  (req, res, next) => {
+    if (!req.body.customerName && (req.body.fullName || req.body.name)) {
+      req.body.customerName = req.body.fullName || req.body.name;
+    }
+    if (!req.body.phone && req.body.mobileNumber) {
+      req.body.phone = req.body.mobileNumber;
+    }
+    if (!req.body.address && req.body.deliveryAddress) {
+      req.body.address = req.body.deliveryAddress;
+    }
+    if (Array.isArray(req.body.items)) {
+      req.body.items = req.body.items.map((it) => ({
+        ...it,
+        product: it.product || it.productId,
+      }));
+    }
+    next();
+  },
+  validate([
+    body('customerName')
+      .trim()
+      .notEmpty()
+      .withMessage('Customer name is required')
+      .isLength({ min: 2, max: 100 })
+      .withMessage('Customer name must be between 2 and 100 characters'),
+    body('phone')
+      .trim()
+      .notEmpty()
+      .withMessage('Mobile number is required')
+      .customSanitizer((val) => String(val || '').replace(/[\s-]/g, ''))
+      .matches(/^(?:\+91|91)?[6-9]\d{9}$/)
+      .withMessage('Please provide a valid 10-digit mobile number'),
+    body('address')
+      .trim()
+      .notEmpty()
+      .withMessage('Delivery address is required')
+      .isLength({ min: 5, max: 300 })
+      .withMessage('Address must be at least 5 characters'),
+    body('items')
+      .isArray({ min: 1 })
+      .withMessage('Order must contain at least one item'),
+    body('totalAmount')
+      .optional()
+      .isFloat({ min: 0 })
+      .withMessage('Total amount must be a positive number'),
+  ]),
+];
 
 const validateOrderStatus = validate([
   body('status')
     .trim()
-    .isIn(['pending', 'confirmed', 'shipped', 'delivered'])
-    .withMessage('Status must be one of: pending, confirmed, shipped, delivered'),
+    .isIn(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'])
+    .withMessage('Status must be one of: pending, confirmed, shipped, delivered, cancelled'),
 ]);
 
 const validateAdminLogin = validate([

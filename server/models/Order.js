@@ -47,17 +47,82 @@ const orderSchema = new mongoose.Schema({
     // At least one item must be in the order
     validate: [arr => arr.length > 0, 'Order must have at least one item'],
   },
+  subtotal: {
+    type: Number,
+    min: 0,
+    default: 0,
+  },
+  gst: {
+    type: Number,
+    min: 0,
+    default: 0,
+  },
+  deliveryFee: {
+    type: Number,
+    min: 0,
+    default: 0,
+  },
   totalAmount: {
     type: Number,
     required: true,
     min: 0,
   },
-  // Order lifecycle: pending → confirmed → shipped → delivered
+  shortId: {
+    type: String,
+    uppercase: true,
+    trim: true,
+    index: true,
+  },
+  idempotencyKey: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true,
+  },
+  idempotencyPayloadHash: {
+    type: String,
+    sparse: true,
+    trim: true,
+  },
+  // Cryptographic SHA-256 hash of the guest tracking token (raw token is never stored)
+  trackingTokenHash: {
+    type: String,
+    unique: true,
+    sparse: true,
+    index: true,
+  },
+  // Order lifecycle: pending → confirmed → shipped → delivered → cancelled
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'shipped', 'delivered'],
+    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
     default: 'pending',
   },
+  // Chronological timeline of status transitions for customer visibility
+  statusHistory: [
+    {
+      status: {
+        type: String,
+        required: true,
+      },
+      changedAt: {
+        type: Date,
+        default: Date.now,
+      },
+      note: {
+        type: String,
+        default: '',
+      },
+      actor: {
+        type: String,
+        default: 'System',
+      },
+      actorId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin',
+      },
+      _id: false,
+    },
+  ],
 }, {
   timestamps: true,
 });

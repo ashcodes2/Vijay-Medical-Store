@@ -9,10 +9,14 @@ import CartSection from './components/CartSection';
 import Footer from './components/Footer';
 import PolicyModal from './components/PolicyModal';
 import ProductDetailModal from './components/ProductDetailModal';
+import PrescriptionUploadModal from './components/PrescriptionUploadModal';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import NotFound from './components/NotFound';
-import { sendOrderToWhatsApp } from './services/WhatsAppService';
+import OrderConfirmModal from './components/OrderConfirmModal';
+import CheckoutPage from './components/CheckoutPage';
+import OrderTrackingPage from './components/OrderTrackingPage';
+import OrderConfirmationPage from './components/OrderConfirmationPage';
 import { createOrder } from './services/api';
 import { Star, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -50,13 +54,45 @@ function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [policyModal, setPolicyModal] = useState({ isOpen: false, type: null });
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
 
   // Toast notification state
   const [toast, setToast] = useState(null);
 
+  // Order confirmation modal state
+  const [orderConfirm, setOrderConfirm] = useState(null); // { shortId, totalAmount, customerName, phone } | null
+  const [confirmedCartSnapshot, setConfirmedCartSnapshot] = useState([]);
+
   // 404 View state
   const [isNotFound, setIsNotFound] = useState(() => {
     return window.location.hash === '#404';
+  });
+
+  // Guest Checkout View state
+  const [isCheckoutView, setIsCheckoutView] = useState(() => {
+    return window.location.hash === '#checkout' || window.location.pathname === '/checkout';
+  });
+
+  // Guest Order Confirmation View state (persisted across page refresh via sessionStorage)
+  const [isOrderConfirmedView, setIsOrderConfirmedView] = useState(() => {
+    return window.location.hash === '#order-confirmed';
+  });
+  const [confirmedOrderReceipt, setConfirmedOrderReceipt] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('vms_last_order_confirmation');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Guest Order Tracking View state
+  const [trackingToken, setTrackingToken] = useState(() => {
+    const hash = window.location.hash;
+    return hash.startsWith('#track/') ? hash.replace('#track/', '') : '';
+  });
+  const [isTrackingView, setIsTrackingView] = useState(() => {
+    return window.location.hash.startsWith('#track') || window.location.pathname.startsWith('/track');
   });
 
   // Admin portal state
@@ -73,21 +109,69 @@ function App() {
   useEffect(() => {
     if (isAdminView) {
       document.title = "Admin Portal | Vijay Medical Store";
+    } else if (isCheckoutView) {
+      document.title = "Guest Checkout | Vijay Medical Store";
+    } else if (isOrderConfirmedView) {
+      document.title = "Order Confirmed | Vijay Medical Store";
+    } else if (isTrackingView) {
+      document.title = "Order Tracking | Vijay Medical Store";
     } else if (isNotFound) {
       document.title = "Page Not Found | Vijay Medical Store";
     } else {
       document.title = "Vijay Medical Store — Authentic Medicines & Healthcare Since 1984";
     }
-  }, [isAdminView, isNotFound]);
+  }, [isAdminView, isCheckoutView, isOrderConfirmedView, isTrackingView, isNotFound]);
 
   useEffect(() => {
     const handleHash = () => {
-      setIsAdminView(window.location.hash === '#admin' || window.location.pathname === '/admin');
-      setIsNotFound(window.location.hash === '#404');
+      const hash = window.location.hash;
+      setIsAdminView(hash === '#admin' || window.location.pathname === '/admin');
+      setIsNotFound(hash === '#404');
+      setIsCheckoutView(hash === '#checkout' || window.location.pathname === '/checkout');
+
+      const isConfirmed = hash === '#order-confirmed';
+      setIsOrderConfirmedView(isConfirmed);
+      if (isConfirmed) {
+        try {
+          const saved = sessionStorage.getItem('vms_last_order_confirmation');
+          if (saved) setConfirmedOrderReceipt(JSON.parse(saved));
+        } catch {
+          // ignore session parse errors
+        }
+      }
+
+      const isTrack = hash.startsWith('#track') || window.location.pathname.startsWith('/track');
+      setIsTrackingView(isTrack);
+      if (hash.startsWith('#track/')) {
+        setTrackingToken(hash.replace('#track/', ''));
+      } else if (hash === '#track') {
+        setTrackingToken('');
+      }
     };
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
+
+  const openCheckout = () => {
+    setIsCheckoutView(true);
+    window.location.hash = 'checkout';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const closeCheckout = () => {
+    setIsCheckoutView(false);
+    if (window.location.hash === '#checkout') {
+      window.history.pushState('', document.title, window.location.pathname + window.location.search);
+    }
+  };
+
+  const closeTracking = () => {
+    setIsTrackingView(false);
+    setTrackingToken('');
+    if (window.location.hash.startsWith('#track')) {
+      window.history.pushState('', document.title, window.location.pathname + window.location.search);
+    }
+  };
 
   const openAdmin = () => {
     setIsAdminView(true);
@@ -152,6 +236,48 @@ function App() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const handleAddMultipleToCart = (items) => {
+    if (!Array.isArray(items) || items.length === 0) return;
+
+    setCartItems((prev) => {
+      const updated = [...prev];
+
+      items.forEach((newItem) => {
+        const prodId = newItem.id || newItem._id;
+        const availableStock = typeof newItem.stock === 'number' ? newItem.stock : 0;
+        if (availableStock <= 0) return;
+
+        const reqQty = Math.max(1, Number(newItem.quantity) || 1);
+        const existingIdx = updated.findIndex((i) => (i.id || i._id) === prodId);
+
+        if (existingIdx > -1) {
+          const currentQty = updated[existingIdx].quantity;
+          const newQty = Math.min(availableStock, currentQty + reqQty);
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            quantity: newQty,
+          };
+        } else {
+          const initialQty = Math.min(availableStock, reqQty);
+          const prodImage = newItem.image || (Array.isArray(newItem.images) && newItem.images[0]) || '';
+          updated.push({
+            ...newItem,
+            id: prodId,
+            image: prodImage,
+            stock: availableStock,
+            quantity: initialQty,
+          });
+        }
+      });
+
+      return updated;
+    });
+
+    setToast(`Added ${items.length} prescription medicine(s) to cart`);
+    setTimeout(() => setToast(null), 3500);
+    setIsCartOpen(true); // Open cart drawer to display added items
+  };
+
   const handleUpdateQuantity = (id, newQuantity) => {
     if (newQuantity < 1) {
       handleRemoveItem(id);
@@ -174,10 +300,9 @@ function App() {
     setCartItems(prev => prev.filter(item => item.id !== id && item._id !== id));
   };
 
-  // New checkout flow: save to DB first, then WhatsApp as a bonus notification
+  // New checkout flow: save to DB, SMS sent server-side, show confirm modal
   const handleConfirmOrder = async (customerInfo, totalAmount, onSuccess, onError) => {
     try {
-      // Build the order object matching our Order schema
       const orderData = {
         customerName: customerInfo.name,
         phone: customerInfo.phone,
@@ -195,17 +320,55 @@ function App() {
         totalAmount,
       };
 
-      // Save to database — this is now the source of truth
-      await createOrder(orderData);
+      // Save to database — server sends SMS automatically
+      const result = await createOrder(orderData);
 
-      // Also send WhatsApp notification (optional, won't break if it fails)
-      sendOrderToWhatsApp(cartItems, totalAmount);
+      // Snapshot the cart before clearing it (for modal display)
+      setConfirmedCartSnapshot([...cartItems]);
 
-      // Clear cart and show success
+      // Prepare confirmation receipt
+      const receiptData = {
+        orderReference: result.orderReference || `#VMS-${result.shortId}`,
+        shortId: result.shortId,
+        orderId: result.orderId,
+        customerName: customerInfo.name,
+        phone: customerInfo.phone,
+        address: customerInfo.address,
+        totalAmount: result.totalAmount,
+        status: result.status || 'pending',
+        createdAt: new Date().toISOString(),
+        trackingToken: result.trackingToken || '',
+        trackingUrl: result.trackingUrl || (result.trackingToken ? `/#track/${result.trackingToken}` : ''),
+        items: [...cartItems],
+      };
+
+      // Persist in sessionStorage so page refreshes never lose the confirmation receipt
+      try {
+        sessionStorage.setItem('vms_last_order_confirmation', JSON.stringify(receiptData));
+      } catch {
+        // ignore storage errors
+      }
+
+      setConfirmedOrderReceipt(receiptData);
+      setOrderConfirm({
+        shortId: result.shortId,
+        totalAmount: result.totalAmount,
+        customerName: result.customerName || customerInfo.name,
+        phone: customerInfo.phone,
+      });
+
+      // Clear cart
       setCartItems([]);
-      onSuccess();
+      window.location.hash = 'order-confirmed';
+      setIsOrderConfirmedView(true);
+
+      if (typeof onSuccess === 'function') {
+        onSuccess(result);
+      }
     } catch (error) {
-      onError(error.message || 'Failed to place order');
+      if (typeof onError === 'function') {
+        onError(error.message || 'Failed to place order');
+      }
     }
   };
 
@@ -227,6 +390,39 @@ function App() {
       <AdminLogin
         onLoginSuccess={handleAdminLogin}
         onBack={closeAdmin}
+      />
+    );
+  }
+
+  if (isCheckoutView) {
+    return (
+      <CheckoutPage
+        cartItems={cartItems}
+        onUpdateQuantity={handleUpdateQuantity}
+        onRemoveItem={handleRemoveItem}
+        onPlaceOrder={handleConfirmOrder}
+        onBack={closeCheckout}
+      />
+    );
+  }
+
+  if (isOrderConfirmedView) {
+    return (
+      <OrderConfirmationPage
+        orderData={confirmedOrderReceipt}
+        onContinueShopping={() => {
+          setIsOrderConfirmedView(false);
+          window.location.hash = '';
+        }}
+      />
+    );
+  }
+
+  if (isTrackingView) {
+    return (
+      <OrderTrackingPage
+        token={trackingToken}
+        onBack={closeTracking}
       />
     );
   }
@@ -263,10 +459,11 @@ function App() {
         cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)} 
         onCartClick={() => setIsCartOpen(true)}
         onSearchChange={setSearchQuery}
+        onUploadPrescription={() => setIsPrescriptionModalOpen(true)}
       />
       
       <main>
-        <Hero />
+        <Hero onUploadPrescription={() => setIsPrescriptionModalOpen(true)} />
         <TrustStrip />
         <DailyEssentials />
         <ProductGrid onAddToCart={handleAddToCart} searchQuery={searchQuery} onProductClick={setSelectedProduct} />
@@ -349,6 +546,7 @@ function App() {
         onUpdateQuantity={handleUpdateQuantity}
         onRemove={handleRemoveItem}
         onConfirm={handleConfirmOrder}
+        onCheckout={openCheckout}
       />
 
       {/* Product Detail Modal */}
@@ -358,10 +556,25 @@ function App() {
         onAddToCart={handleAddToCart}
       />
 
+      {/* Prescription OCR & Assisted Auto-Cart Modal */}
+      <PrescriptionUploadModal
+        isOpen={isPrescriptionModalOpen}
+        onClose={() => setIsPrescriptionModalOpen(false)}
+        onAddMultiple={handleAddMultipleToCart}
+      />
+
       <PolicyModal 
         isOpen={policyModal.isOpen} 
         type={policyModal.type} 
         onClose={() => setPolicyModal({ ...policyModal, isOpen: false })} 
+      />
+
+      {/* Order Confirmation Modal — shown after successful checkout */}
+      <OrderConfirmModal
+        isOpen={!!orderConfirm}
+        onClose={() => setOrderConfirm(null)}
+        orderData={orderConfirm}
+        cartItems={confirmedCartSnapshot}
       />
       
       <Footer onOpenPolicy={openPolicy} onOpenAdmin={openAdmin} />
